@@ -390,7 +390,12 @@
 <script>
   // proportional scaling of fixed stage
   function fit(){
-    const s = Math.min(window.innerWidth/1000, window.innerHeight/640);
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const portraitPhone = vw < 700 && vh > vw;
+    // phone portrait: COVER (fill the screen); desktop/landscape: CONTAIN (whole frame)
+    const s = portraitPhone
+      ? Math.max(vw/1000, vh/640)
+      : Math.min(vw/1000, vh/640);
     document.getElementById('stage').style.transform = 'scale(' + s + ')';
   }
   window.addEventListener('resize', fit); fit();
