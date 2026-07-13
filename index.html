@@ -296,6 +296,69 @@
     padding:7px 14px; cursor:pointer; opacity:.75; transition:all .3s ease;
   }
   #replay:hover{ opacity:1; border-color:var(--gold); color:var(--gold); }
+
+  /* =====================================================================
+     MOBILE PORTRAIT — genuine fluid layout, no transform:scale().
+     Applied only when JS (fit()) detects a narrow, tall viewport and adds
+     .mobile to #stage. Desktop rules above are untouched.
+  ===================================================================== */
+  #stage.mobile{
+    width:100vw; height:100vh;
+    border-radius:0;
+    box-shadow:none;
+  }
+
+  #stage.mobile #skyline{ bottom:3vh; }
+  #stage.mobile #skyline svg{ height:min(9vh, 62px); }
+
+  #stage.mobile .narr{ padding:0 24px; }
+  #stage.mobile .narr small{
+    font-size:clamp(10px, 3.2vw, 12px); letter-spacing:.26em; margin-bottom:14px;
+  }
+  #stage.mobile .narr .l1,
+  #stage.mobile .narr .l2{ font-size:clamp(19px, 6.4vw, 28px); line-height:1.32; }
+
+  #stage.mobile .whisper{ white-space:normal; max-width:58vw; }
+  #stage.mobile #w1{ left:6vw;  top:14vh; right:auto;  font-size:clamp(16px,4.8vw,19px); }
+  #stage.mobile #w2{ right:6vw; top:21vh; left:auto;   font-size:clamp(15px,4.4vw,18px); }
+  #stage.mobile #w3{ left:8vw;  top:30vh; right:auto;  font-size:clamp(15px,4.4vw,18px); }
+  #stage.mobile #w4{ right:8vw; top:38vh; left:auto; bottom:auto; font-size:clamp(16px,4.8vw,19px); }
+  #stage.mobile #w5{ left:10vw; top:46vh; right:auto;  font-size:clamp(14px,4.2vw,17px); }
+  #stage.mobile #w6{ right:10vw; top:54vh; left:auto; bottom:auto; font-size:clamp(14px,4.2vw,17px); }
+
+  #stage.mobile #wordmark{ font-size:clamp(32px, 11vw, 50px); letter-spacing:.14em; }
+  #stage.mobile #wordmark.open{ transform:translateY(-13vh) scale(.62); }
+
+  #stage.mobile #doorlight.open{ height:38vh; }
+  #stage.mobile #doorlight.flood{ width:50vw; height:46vh; }
+
+  #stage.mobile #doorway{ width:74vw; height:56vh; }
+  #stage.mobile #doorway.grown .leaf{ width:15vw; height:44vh; }
+
+  #stage.mobile #insidemark{ top:6vh; font-size:clamp(20px, 6.2vw, 28px); letter-spacing:.2em; margin-bottom:6px; }
+  #stage.mobile #insidemark small{ font-size:clamp(10px, 3vw, 11px); letter-spacing:.3em; margin-bottom:6px; }
+
+  #stage.mobile #glimpses{
+    top:17vh; flex-direction:column; align-items:center; gap:1.4vh;
+  }
+  #stage.mobile .glimpse{ width:72vw; }
+  #stage.mobile .glimpse .art{ height:6.5vh; }
+  #stage.mobile .glimpse .cap{
+    font-size:clamp(10.5px, 3vw, 12.5px); margin-top:.8vh; line-height:1.4;
+  }
+
+  #stage.mobile #rsvp{ top:60vh; }
+  #stage.mobile #rsvpfield{
+    min-width:70vw; font-size:clamp(16px, 4.2vw, 18px); padding:10px 16px;
+  }
+
+  #stage.mobile #finale{ top:72vh; font-size:clamp(16px, 4.6vw, 20px); }
+
+  #stage.mobile #firma{
+    right:4vw; bottom:max(1.5vh, env(safe-area-inset-bottom)); gap:12px;
+  }
+  #stage.mobile #firma a{ font-size:clamp(10px, 3vw, 12px); }
+  #stage.mobile #replay{ font-size:clamp(9px, 2.8vw, 11px); padding:6px 10px; }
 </style>
 </head>
 <body>
@@ -388,15 +451,21 @@
 </div>
 
 <script>
-  // proportional scaling of fixed stage
+  // desktop/landscape: proportional scaling of the fixed 1000x640 stage.
+  // phone portrait: no transform at all — #stage.mobile switches to a
+  // fluid, vh/vw-based layout (see CSS) that fills the screen natively.
   function fit(){
     const vw = window.innerWidth, vh = window.innerHeight;
+    const stage = document.getElementById('stage');
     const portraitPhone = vw < 700 && vh > vw;
-    // phone portrait: COVER (fill the screen); desktop/landscape: CONTAIN (whole frame)
-    const s = portraitPhone
-      ? Math.max(vw/1000, vh/640)
-      : Math.min(vw/1000, vh/640);
-    document.getElementById('stage').style.transform = 'scale(' + s + ')';
+    if(portraitPhone){
+      stage.classList.add('mobile');
+      stage.style.transform = 'none';
+    } else {
+      stage.classList.remove('mobile');
+      const s = Math.min(vw/1000, vh/640);
+      stage.style.transform = 'scale(' + s + ')';
+    }
   }
   window.addEventListener('resize', fit); fit();
 
