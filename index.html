@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>AZURIIA — The door between the two i's</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#071426;
+    --night-2:#0B1E3A;
+    --gold:#C9A96A;
+    --gold-soft:rgba(201,169,106,.55);
+    --warm:#F4EFE6;
+    --cold:#7C8698;
+    --display:'Marcellus', 'Times New Roman', serif;
+    --sans:'Inter', system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:#04070d;
+    font-family:var(--sans);
+    overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    height:100vh; width:100vw;
+  }
+  #viewport{ position:relative; width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; }
+
+  #stage{
+    position:relative;
+    width:1000px; height:640px;
+    background:
+      radial-gradient(130% 100% at 50% 110%, #12294a 0%, var(--night-2) 38%, var(--night) 75%, #050e1c 100%);
+    transform-origin:center center;
+    overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.7);
+    border-radius:2px;
+    transition:filter 2.5s ease;
+  }
+  /* warm shift when the door opens */
+  #warmth{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(90% 80% at 50% 55%, rgba(201,169,106,.16) 0%, rgba(201,169,106,.05) 45%, transparent 75%);
+    opacity:0; transition:opacity 3s ease;
+  }
+  #warmth.on{ opacity:1; }
+
+  /* skyline — one thin gold line, drawn */
+  #skyline{
+    position:absolute; left:0; right:0; bottom:34px; z-index:2; pointer-events:none;
+    opacity:.5;
+  }
+  #skyline svg{ width:100%; height:70px; display:block; }
+  #skyline path{
+    fill:none; stroke:var(--gold-soft); stroke-width:1.2;
+    stroke-dasharray:1; stroke-dashoffset:1;
+    transition:stroke-dashoffset 4s ease;
+  }
+  #skyline.drawn path{ stroke-dashoffset:0; }
+
+  /* grain */
+  #grain{
+    position:absolute; inset:0; pointer-events:none; z-index:60;
+    opacity:.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- narration ---------- */
+  .narr{
+    position:absolute; left:0; right:0; top:44%;
+    transform:translateY(-50%);
+    text-align:center; z-index:35;
+    color:var(--warm);
+    padding:0 80px;
+    opacity:0; transition:opacity 1.6s ease;
+    pointer-events:none;
+  }
+  .narr.show{opacity:1;}
+  .narr small{
+    display:block; font-family:var(--sans); font-weight:600; font-size:12px;
+    letter-spacing:.42em; text-transform:uppercase; color:var(--gold);
+    margin-bottom:22px;
+  }
+  .narr .l1{ font-family:var(--display); font-size:40px; letter-spacing:.02em; line-height:1.25; }
+  .narr .l2{ font-family:var(--display); font-size:40px; letter-spacing:.02em; color:var(--gold); margin-top:4px; }
+
+  /* ---------- whispers ---------- */
+  .whisper{
+    position:absolute; z-index:10;
+    font-family:var(--display); color:var(--warm);
+    opacity:0; transform:translateY(6px);
+    transition:opacity 2s ease, transform 2s ease, color 1.8s ease, filter 1.8s ease;
+    white-space:nowrap;
+  }
+  .whisper.show{ opacity:.34; transform:translateY(0); }
+  .whisper.cold{ color:var(--cold); opacity:.14; filter:blur(1px); }
+  .whisper.gone{ opacity:0; }
+  #w1{ left:96px;  top:120px; font-size:24px; }
+  #w2{ right:110px; top:160px; font-size:20px; }
+  #w3{ left:150px; top:420px; font-size:21px; }
+  #w4{ right:150px; top:400px; font-size:24px; }
+  #w5{ left:430px; top:96px;  font-size:19px; }
+  #w6{ right:340px; bottom:130px; font-size:19px; }
+
+  /* ---------- the empty search ---------- */
+  #search{
+    position:absolute; left:280px; right:280px; top:280px; z-index:20;
+    text-align:center;
+    opacity:0; transition:opacity 1.2s ease;
+  }
+  #search.show{ opacity:1; }
+  #searchline{
+    display:inline-block; min-width:340px;
+    border-bottom:1px solid rgba(244,239,230,.35);
+    padding:8px 12px 10px;
+    font-family:var(--sans); font-weight:400; font-size:22px; letter-spacing:.04em;
+    color:var(--warm); text-align:left;
+  }
+  #caret{
+    display:inline-block; width:1px; height:24px; margin-left:2px;
+    background:var(--gold); vertical-align:-4px;
+    animation:blink 1s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{opacity:0;} }
+  #results{ margin-top:24px; text-align:left; display:inline-block; }
+  .result{
+    font-family:var(--sans); font-size:14.5px; letter-spacing:.02em;
+    color:var(--cold); padding:8px 2px;
+    border-bottom:1px solid rgba(124,134,152,.18);
+    opacity:0; transform:translateY(4px);
+    transition:opacity .9s ease, transform .9s ease;
+    min-width:360px;
+  }
+  .result.show{ opacity:.8; transform:none; }
+  .result em{ font-style:normal; color:#98A2B3; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; margin-left:8px; }
+
+  /* ---------- wordmark / the gate ---------- */
+  #gatezone{
+    position:absolute; left:0; right:0; top:0; bottom:0; z-index:25;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+    opacity:0; transition:opacity 1.5s ease;
+  }
+  #gatezone.show{ opacity:1; }
+  #wordmark{
+    position:relative;
+    font-family:var(--display); font-size:74px; color:var(--warm);
+    letter-spacing:.18em; display:flex; align-items:baseline;
+    text-shadow:0 0 40px rgba(201,169,106,0);
+    transition:text-shadow 2.5s ease, transform 2.8s ease;
+  }
+  #wordmark span{ display:inline-block; opacity:0; transform:translateY(10px); transition:opacity .9s ease, transform .9s ease; }
+  #wordmark span.on{ opacity:1; transform:translateY(0); }
+  #wordmark .pillar{
+    color:var(--gold);
+    transition:opacity .9s ease, transform .9s ease, margin 2.6s cubic-bezier(.22,1,.36,1);
+  }
+  #wordmark.open .pillar.left{ margin-right:.62em; }
+  #wordmark.open .pillar.right{ margin-left:.62em; }
+  #wordmark.open{ text-shadow:0 0 60px rgba(201,169,106,.35); transform:translateY(-104px) scale(.62); }
+
+  #doorlight{
+    position:absolute; left:50%; top:50%; z-index:24;
+    width:8px; height:0px;
+    transform:translate(-50%,-50%);
+    background:linear-gradient(180deg, rgba(201,169,106,0) 0%, rgba(201,169,106,.85) 18%, #E8D5AC 50%, rgba(201,169,106,.85) 82%, rgba(201,169,106,0) 100%);
+    filter:blur(1px);
+    box-shadow:0 0 60px 18px rgba(201,169,106,.25);
+    opacity:0;
+    transition:height 3s cubic-bezier(.22,1,.36,1), opacity 2s ease, box-shadow 3s ease;
+    pointer-events:none;
+  }
+  #doorlight.open{ height:300px; opacity:1; box-shadow:0 0 140px 60px rgba(201,169,106,.22); }
+  #doorlight.wide{ width:14px; }
+  #doorlight.flood{ width:150px; height:330px; filter:blur(8px); }
+
+  #wordmark span.off{ opacity:0; transform:translateY(-6px); }
+
+  /* ---------- the two doors ---------- */
+  #doorway{
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    width:420px; height:380px; z-index:27;
+    perspective:900px; pointer-events:none;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0;
+    transition:opacity .9s ease, transform 2.6s cubic-bezier(.55,0,.85,.4);
+  }
+  #doorway.show{ opacity:1; }
+  #doorway.enter{
+    transform:translate(-50%,-50%) scale(7.5);
+    opacity:0;
+    transition:transform 2.6s cubic-bezier(.5,0,.9,.4), opacity 2s ease .7s;
+  }
+  .leaf{
+    width:13px; height:58px; margin:0 10px;
+    background:linear-gradient(90deg, #8F7440 0%, var(--gold) 42%, #E8D5AC 55%, #8F7440 100%);
+    box-shadow:0 0 26px rgba(201,169,106,.45);
+    transition:width 1.7s cubic-bezier(.22,1,.36,1), height 1.7s cubic-bezier(.22,1,.36,1),
+               transform 2.4s cubic-bezier(.6,.05,.3,1);
+  }
+  .leaf.left{ transform-origin:left center; }
+  .leaf.right{ transform-origin:right center; }
+  #doorway.grown .leaf{ width:88px; height:302px; }
+  #doorway.openleaves .leaf.left{ transform:rotateY(-78deg); }
+  #doorway.openleaves .leaf.right{ transform:rotateY(78deg); }
+
+  /* full-screen warm light for the push-through */
+  #flash{
+    position:absolute; inset:0; z-index:45; pointer-events:none;
+    background:radial-gradient(60% 60% at 50% 50%, #F6E7C6 0%, rgba(232,213,172,.92) 40%, rgba(201,169,106,.55) 70%, rgba(11,30,58,0) 100%);
+    opacity:0; transition:opacity 1.5s ease;
+  }
+  #flash.on{ opacity:1; }
+  #flash.fade{ opacity:0; transition:opacity 2.4s ease; }
+
+  /* inside: small wordmark */
+  #insidemark{
+    position:absolute; left:0; right:0; top:92px; text-align:center; z-index:26;
+    font-family:var(--display); font-size:30px; letter-spacing:.34em; color:var(--gold);
+    opacity:0; transition:opacity 2s ease;
+  }
+  #insidemark small{
+    display:block; font-family:var(--sans); font-weight:500; font-size:11px;
+    letter-spacing:.42em; text-transform:uppercase; color:var(--warm); opacity:.7;
+    margin-bottom:12px;
+  }
+  #insidemark.show{ opacity:1; }
+
+  /* ---------- glimpses (inside) ---------- */
+  #glimpses{
+    position:absolute; left:0; right:0; top:250px; z-index:26;
+    display:flex; justify-content:center; gap:96px;
+    pointer-events:none;
+  }
+  .glimpse{ width:190px; text-align:center; opacity:0; transform:translateY(12px); transition:opacity 1.4s ease, transform 1.4s ease; }
+  .glimpse.show{ opacity:1; transform:translateY(0); }
+  .glimpse .art{ height:120px; display:flex; align-items:flex-end; justify-content:center; }
+  .glimpse svg{ height:100%; width:auto; overflow:visible; }
+  .gline{
+    fill:none; stroke:var(--gold); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:1; stroke-dashoffset:1;
+    transition:stroke-dashoffset 2.2s ease .2s;
+  }
+  .glimpse.show .gline{ stroke-dashoffset:0; }
+  .glimpse .cap{
+    margin-top:18px;
+    font-family:var(--sans); font-weight:500; font-size:11.5px;
+    letter-spacing:.26em; text-transform:uppercase; color:var(--warm); opacity:.85;
+    line-height:1.7;
+  }
+
+  /* ---------- the list (rsvp) ---------- */
+  #rsvp{
+    position:absolute; left:0; right:0; top:472px; z-index:26;
+    text-align:center; opacity:0; transition:opacity 1.6s ease;
+    pointer-events:none;
+  }
+  #rsvp.show{ opacity:1; }
+  #rsvpfield{
+    display:inline-block; min-width:300px;
+    border:1px solid rgba(201,169,106,.5);
+    padding:13px 26px;
+    font-family:var(--sans); font-size:14px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--warm);
+  }
+  #rsvpfield .typed{ color:var(--gold); }
+
+  /* final line */
+  #finale{
+    position:absolute; left:0; right:0; top:560px; z-index:26;
+    text-align:center;
+    font-family:var(--display); font-size:22px; letter-spacing:.06em; color:var(--warm);
+    opacity:0; transition:opacity 1.8s ease;
+  }
+  #finale.show{ opacity:.95; }
+
+  /* ---------- signature ---------- */
+  #firma{
+    position:absolute; right:26px; bottom:18px; z-index:50;
+    display:flex; align-items:center; gap:18px;
+    opacity:0; transition:opacity 1.5s ease;
+  }
+  #firma.show{ opacity:1; }
+  #firma a{
+    font-family:var(--sans); font-size:12.5px; letter-spacing:.14em;
+    color:var(--warm); text-decoration:none; opacity:.75;
+  }
+  #firma a:hover{ opacity:1; color:var(--gold); }
+  #replay{
+    background:none; border:1px solid rgba(244,239,230,.3); color:var(--warm);
+    font-family:var(--sans); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    padding:7px 14px; cursor:pointer; opacity:.75; transition:all .3s ease;
+  }
+  #replay:hover{ opacity:1; border-color:var(--gold); color:var(--gold); }
+</style>
+</head>
+<body>
+<div id="viewport">
+  <div id="stage">
+    <div id="warmth"></div>
+    <div id="grain"></div>
+
+    <div id="skyline">
+      <svg viewBox="0 0 1000 70" preserveAspectRatio="none">
+        <path pathLength="1" d="M0,58 L60,58 L60,40 L92,40 L92,58 L150,58 L150,30 L164,30 L164,22 L178,22 L178,30 L192,30 L192,58 L260,58 L260,44 L300,44 L300,58 L370,58 L370,18 L382,18 L382,10 L394,10 L394,18 L406,18 L406,58 L470,58 L470,36 L520,36 L520,58 L600,58 L600,26 L614,26 L614,14 L640,14 L640,26 L654,26 L654,58 L730,58 L730,42 L775,42 L775,58 L840,58 L840,32 L855,32 L855,24 L872,24 L872,32 L888,32 L888,58 L1000,58"/>
+      </svg>
+    </div>
+
+    <!-- narración -->
+    <div class="narr" id="n1">
+      <small>Madrid · Summer 2026</small>
+      <div class="l1">There's a place Madrid is already talking about.</div>
+      <div class="l2">Quietly.</div>
+    </div>
+
+    <div class="narr" id="n2">
+      <div class="l1">Every landmark needs an entrance.</div>
+      <div class="l2">This is yours.</div>
+    </div>
+
+    <!-- whispers -->
+    <div class="whisper" id="w1">“Have you heard…?”</div>
+    <div class="whisper" id="w2">“…Castellana, 78.”</div>
+    <div class="whisper" id="w3">“They say September.”</div>
+    <div class="whisper" id="w4">“…F1 week.”</div>
+    <div class="whisper" id="w5">“Invitation only.”</div>
+    <div class="whisper" id="w6">“How do you get in?”</div>
+
+    <!-- wordmark / puerta -->
+    <div id="doorlight"></div>
+    <div id="gatezone">
+      <div id="wordmark">
+        <span>A</span><span>Z</span><span>U</span><span>R</span><span class="pillar left">I</span><span class="pillar right">I</span><span>A</span>
+      </div>
+    </div>
+    <div id="doorway">
+      <div class="leaf left"></div>
+      <div class="leaf right"></div>
+    </div>
+    <div id="flash"></div>
+    <div id="insidemark"><small>Welcome inside</small>AZURIIA</div>
+
+    <!-- dentro -->
+    <div id="glimpses">
+      <div class="glimpse" id="g1">
+        <div class="art">
+          <svg viewBox="0 0 100 120">
+            <path class="gline" pathLength="1" d="M30,14 C30,42 44,50 50,54 C56,50 70,42 70,14 Z M50,54 L50,96 M32,104 C38,99 62,99 68,104"/>
+          </svg>
+        </div>
+        <div class="cap">Liquid art,<br>morning to night</div>
+      </div>
+      <div class="glimpse" id="g2">
+        <div class="art">
+          <svg viewBox="0 0 130 120">
+            <path class="gline" pathLength="1" d="M65,10 L65,88 M65,10 C36,10 16,28 12,46 C28,38 46,36 65,36 C84,36 102,38 118,46 C114,28 94,10 65,10 Z M12,46 C24,42 40,40 65,40 M65,40 C90,40 106,42 118,46 M40,104 L90,104 M52,88 L52,96 M78,88 L78,96 M46,96 L84,96"/>
+          </svg>
+        </div>
+        <div class="cap">140 seats<br>above the Castellana</div>
+      </div>
+      <div class="glimpse" id="g3">
+        <div class="art">
+          <svg viewBox="0 0 140 120">
+            <path class="gline" pathLength="1" d="M14,58 L126,58 M22,58 L22,100 M118,58 L118,100 M14,58 C14,50 30,46 42,46 M42,46 C42,40 50,36 56,36 C62,36 68,40 68,46 M68,46 C80,46 96,44 100,38 M100,38 C102,34 108,32 112,34 M126,58 C126,52 116,48 108,48"/>
+          </svg>
+        </div>
+        <div class="cap">93 seats inside.<br>One list.</div>
+      </div>
+    </div>
+
+    <!-- la lista -->
+    <div id="rsvp">
+      <div id="rsvpfield"><span class="typed" id="rsvptyped"></span><span style="opacity:.4">&nbsp;</span></div>
+    </div>
+
+    <div id="finale">Desire now has an address.</div>
+
+    <!-- firma -->
+    <div id="firma">
+      <button id="replay" onclick="window.location.reload()">Replay</button>
+      <a href="https://carlosmakes.com" target="_blank" rel="noopener">carlosmakes.com</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // proportional scaling of fixed stage
+  function fit(){
+    const s = Math.min(window.innerWidth/1000, window.innerHeight/640);
+    document.getElementById('stage').style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  const $ = id => document.getElementById(id);
+  const show = (id, cls='show') => $(id).classList.add(cls);
+  const hide = (id, cls='show') => $(id).classList.remove(cls);
+
+  function typeInto(el, text, speed, done){
+    let i = 0;
+    (function tick(){
+      if(i <= text.length){
+        el.textContent = text.slice(0, i);
+        i++;
+        setTimeout(tick, speed);
+      } else if(done){ done(); }
+    })();
+  }
+
+  const T = [];
+  const at = (ms, fn) => T.push(setTimeout(fn, ms));
+
+  // ----- timeline -----
+  at(400,   () => show('skyline','drawn'));
+  at(900,   () => show('n1'));
+
+  // whispers
+  at(4200,  () => hide('n1'));
+  at(5000,  () => show('w1'));
+  at(5900,  () => show('w2'));
+  at(6800,  () => show('w5'));
+  at(7700,  () => show('w3'));
+  at(8600,  () => show('w4'));
+  at(9500,  () => show('w6'));
+
+  // the rumor becomes crossable
+  at(11500, () => show('n2'));
+  at(15000, () => {
+    hide('n2');
+    ['w1','w2','w3','w4','w5','w6'].forEach(w => show(w,'gone'));
+  });
+
+  // the gate: AZURIIA forms, only the two i's remain
+  at(16400, () => {
+    show('gatezone');
+    const spans = document.querySelectorAll('#wordmark span');
+    spans.forEach((sp, i) => setTimeout(() => sp.classList.add('on'), i*260));
+  });
+  at(19600, () => {
+    document.querySelectorAll('#wordmark span:not(.pillar)').forEach(sp => sp.classList.add('off'));
+  });
+
+  // the two i's become two doors
+  at(20800, () => { show('doorway'); hide('gatezone'); });
+  at(21400, () => {
+    $('doorway').classList.add('grown');
+    $('doorlight').classList.add('open');
+    show('warmth','on');
+  });
+
+  // the doors open
+  at(23600, () => {
+    $('doorway').classList.add('openleaves');
+    $('doorlight').classList.add('wide');
+    $('doorlight').classList.add('flood');
+  });
+
+  // camera pushes through — you enter
+  at(25800, () => {
+    $('doorway').classList.add('enter');
+    $('flash').classList.add('on');
+  });
+  at(27600, () => {
+    $('flash').classList.add('fade');
+    hide('doorlight','open'); hide('doorlight','flood'); hide('doorlight','wide');
+    show('insidemark');
+  });
+
+  // inside the experience
+  at(28600, () => show('g1'));
+  at(30400, () => show('g2'));
+  at(32200, () => show('g3'));
+
+  // the list
+  at(35200, () => show('rsvp'));
+  at(36000, () => typeInto($('rsvptyped'), 'Request an invitation', 70));
+  at(38400, () => show('finale'));
+  at(40200, () => show('firma'));
+</script>
+</body>
+</html>
